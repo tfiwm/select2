@@ -1389,7 +1389,8 @@
             var opts = this.parent.prepareOpts.apply(this, arguments);
 
             opts = $.extend({}, {
-                closeOnSelect: true
+                closeOnSelect: true,
+                deliminator: []
             }, opts);
 
             // TODO validate placeholder is a string if specified
@@ -1473,6 +1474,15 @@
                 }
             }));
 
+            this.search.bind("keypress", this.bind(function(e){
+                if (this.opened()) {
+                    if(this.isDeliminator(e) === true){
+                        this.selectHighlighted();
+                        killEvent(e);
+                    }
+                }
+            }));
+
             this.search.bind("keyup", this.bind(this.resizeSearch));
 
             this.container.delegate(selector, "click", this.bind(function (e) {
@@ -1491,6 +1501,16 @@
 
             // set the placeholder if necessary
             this.clearSearch();
+        },
+
+        isDeliminator: function(e){
+            var deliminator = this.opts.deliminator;
+            for(var i = deliminator.length; i--;){
+                if(String.fromCharCode(e.originalEvent.charCode) === deliminator[i]){
+                    return true;
+                }
+            }
+            return false;
         },
 
         // multi
