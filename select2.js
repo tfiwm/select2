@@ -738,8 +738,28 @@
         },
 
         // abstract
+        shouldOpen: function() {
+            var event;
+
+            if (this.opened()) return false;
+
+            event = jQuery.Event("open");
+            this.opts.element.trigger(event);
+            return !event.isDefaultPrevented();
+        },
+
+        /**
+         * Opens the dropdown
+         *
+         * @return {Boolean} whether or not dropdown was opened. This method will return false if, for example,
+         * the dropdown is already open, or if the 'open' event listener on the element called preventDefault().
+         */
+        // abstract
         open: function () {
-            if (this.opened()) return;
+
+            if (!this.shouldOpen()) return false;
+
+            if (this.search.val() === " ") { this.search.val(""); }
 
             this.container.addClass("select2-dropdown-open").addClass("select2-container-active");
             if(this.dropdown[0] !== this.body.children().last()[0]) {
@@ -755,6 +775,8 @@
             this.dropdown.show();
             this.ensureHighlightVisible();
             this.focusSearch();
+
+            return true;
         },
 
         // abstract
@@ -980,7 +1002,8 @@
             this.close();
             this.container.removeClass("select2-container-active");
             this.dropdown.removeClass("select2-drop-active");
-            if (this.search.is(":focus")) { this.search.blur(); }
+            // synonymous to .is(':focus'), which is available in jquery >= 1.6
+            if (this.search[0] === document.activeElement) { this.search.blur(); }
             this.clearSearch();
             this.selection.find(".select2-search-choice-focus").removeClass("select2-search-choice-focus");
         },
@@ -1060,15 +1083,6 @@
         },
 
         // single
-        open: function () {
-
-            if (this.opened()) return;
-
-            this.parent.open.apply(this, arguments);
-
-        },
-
-        // single
         close: function () {
             if (!this.opened()) return;
             this.parent.close.apply(this, arguments);
@@ -1082,7 +1096,7 @@
 
         // single
         isFocused: function () {
-            return this.selection.is(":focus");
+            return this.selection[0] === document.activeElement;
         },
 
         // single
@@ -1542,11 +1556,11 @@
 
         // multi
         open: function () {
-            if (this.opened()) return;
-            this.parent.open.apply(this, arguments);
+            if (this.parent.open.apply(this, arguments) === false) return false;
 			this.clearPlaceholder();
 			this.resizeSearch();
             this.focusSearch();
+            return true;
         },
 
         // multi
