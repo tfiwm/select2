@@ -440,6 +440,16 @@
                 .after(this.container);
             this.container.data("select2", this);
 
+            var self = this;
+            this.container.on('data-finish', function(){
+                if(self.results.find(".select2-result-selectable:not(.select2-disabled)").length > 0) {
+                    self.dropdown.addClass("select2-drop-active");
+                    self.positionDropdown();
+                    self.dropdown.show();
+                    self.ensureHighlightVisible();
+                }
+            });
+
             this.dropdown = this.container.find(".select2-drop");
             this.dropdown.css(evaluate(opts.dropdownCss));
             this.dropdown.addClass(evaluate(opts.dropdownCssClass));
@@ -767,13 +777,7 @@
                 this.dropdown.detach().appendTo(this.body);
             }
 
-            this.dropdown.addClass("select2-drop-active");
-
-            this.positionDropdown();
-
             this.updateResults(true);
-            this.dropdown.show();
-            this.ensureHighlightVisible();
             this.focusSearch();
 
             return true;
@@ -945,7 +949,12 @@
             }
 
             if (search.val().length < opts.minimumInputLength) {
-                render("<li class='select2-no-results'>" + opts.formatInputTooShort(search.val(), opts.minimumInputLength) + "</li>");
+                if($.isFunction(opts.formatInputTooShort)) {
+                    render("<li class='select2-no-results'>" + opts.formatInputTooShort(search.val(), opts.minimumInputLength) + "</li>");
+                } else {
+                    render("");
+                    if(this.opened()) this.dropdown.removeClass("select2-drop-active").hide();
+                }
                 return;
             }
 
@@ -975,7 +984,12 @@
                 }
 
                 if (data.results.length === 0) {
-                    render("<li class='select2-no-results'>" + opts.formatNoMatches(search.val()) + "</li>");
+                    if($.isFunction(opts.formatNoMatches)) {
+                        render("<li class='select2-no-results'>" + opts.formatNoMatches(search.val()) + "</li>");
+                    } else {
+                        render("");
+                        if(this.opened()) this.dropdown.removeClass("select2-drop-active").hide();
+                    }
                     return;
                 }
 
@@ -989,6 +1003,7 @@
                 }
 
                 this.postprocessResults(data, initial);
+                this.container.trigger('data-finish');
             })});
         },
 
@@ -1373,7 +1388,6 @@
                 "style": "width: " + this.getContainerWidth()
             }).html([
                 "    <ul class='select2-choices'>",
-                //"<li class='select2-search-choice'><span>California</span><a href="javascript:void(0)" class="select2-search-choice-close"></a></li>" ,
                 "  <li class='select2-search-field'>" ,
                 "    <input type='text' autocomplete='off' style='width: 25px;' class='select2-input'>" ,
                 "  </li>" ,
